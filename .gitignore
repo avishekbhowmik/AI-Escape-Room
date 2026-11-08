@@ -1,0 +1,22 @@
+# Secrets
+.env
+*.env
+!.env.example
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# Local logs and generated results
+logs/
+*.log
