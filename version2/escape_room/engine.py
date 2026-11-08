@@ -200,6 +200,10 @@ class Engine:
         obj = self.objects[target]
         obj_state = state["objects"][target]
 
+        if "lock" not in obj:
+            text = obj.get("cannot_open", f"There is nothing to open on the {obj['name']}.")
+            return Result(False, "CANNOT_OPEN", [text])
+
         if not obj_state["locked"]:
             if obj.get("is_exit"):
                 state["escaped"] = True
@@ -214,9 +218,6 @@ class Engine:
             if contents:
                 facts.append(contents)
             return Result(True, "ALREADY_OPEN", facts)
-
-        if "lock" not in obj:
-            return Result(False, "CANNOT_OPEN", [f"There is nothing to open on the {obj['name']}."])
 
         lock = obj["lock"]
         if lock["type"] == "item":

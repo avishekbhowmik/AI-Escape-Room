@@ -4,80 +4,166 @@
   "objects": {
     "desk": {
       "name": "desk",
-      "aliases": ["desk", "writing desk", "table"],
+      "aliases": [
+        "desk",
+        "writing desk",
+        "table"
+      ],
       "visible": true,
-      "description": "A mahogany writing desk covered in ink stains. It has a single drawer."
+      "description": "A mahogany writing desk covered in ink stains. It has a single drawer.",
+      "cannot_open": "The desk itself does not open, but it has a drawer with a combination lock."
     },
     "drawer": {
       "name": "drawer",
-      "aliases": ["drawer", "desk drawer", "combination lock"],
+      "aliases": [
+        "drawer",
+        "desk drawer",
+        "combination lock"
+      ],
       "visible": true,
       "description": "The desk drawer is held shut by a brass combination lock with four number wheels.",
       "description_unlocked": "The desk drawer is unlocked and slides open.",
-      "lock": {"type": "code", "code": "7429", "puzzle": "drawer_lock"}
+      "lock": {
+        "type": "code",
+        "code": "7429",
+        "puzzle": "drawer_lock"
+      }
     },
     "bookshelf": {
       "name": "bookshelf",
-      "aliases": ["bookshelf", "shelf", "bookcase", "shelves"],
+      "aliases": [
+        "bookshelf",
+        "shelf",
+        "bookcase",
+        "shelves"
+      ],
       "visible": true,
       "description": "A tall bookshelf full of old leather books. Four of them stick out slightly from the rest. Their spines read Spring, Summer, Autumn and Winter.",
-      "reveals": ["season_books"]
+      "reveals": [
+        "season_books"
+      ],
+      "cannot_open": "The bookshelf has no doors. You can examine the books instead."
     },
     "season_books": {
       "name": "four season books",
-      "aliases": ["season books", "four books", "books", "book", "spring", "summer", "autumn", "winter"],
+      "aliases": [
+        "season books",
+        "four books",
+        "books",
+        "book",
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ],
       "visible": false,
       "description": "You open each of the four books. A single number is written by hand on each first page: Spring 4, Summer 2, Autumn 9, Winter 7."
     },
     "painting": {
       "name": "painting",
-      "aliases": ["painting", "picture", "frame", "portrait", "keyhole"],
+      "aliases": [
+        "painting",
+        "picture",
+        "frame",
+        "portrait",
+        "keyhole"
+      ],
       "visible": true,
       "description": "An oil painting of a stormy harbour. A clock tower on the pier shows ten forty (10:40). The frame hangs a little crooked, and on its side you notice a tiny keyhole.",
       "description_unlocked": "The painting has swung open like a cabinet door, revealing a small niche in the wall.",
-      "lock": {"type": "item", "item": "brass_key", "puzzle": "painting_lock"}
+      "lock": {
+        "type": "item",
+        "item": "brass_key",
+        "puzzle": "painting_lock"
+      }
     },
     "clock": {
       "name": "grandfather clock",
-      "aliases": ["grandfather clock", "clock", "pendulum"],
+      "aliases": [
+        "grandfather clock",
+        "clock",
+        "pendulum"
+      ],
       "visible": true,
       "description": "A tall grandfather clock. It has stopped, and its minute hand is missing. There is a small panel in its base with no handle.",
       "description_hand_attached": "The grandfather clock now has its brass minute hand back, but it still shows the wrong time.",
       "description_unlocked": "The grandfather clock ticks again. The small panel in its base is open.",
-      "lock": {"type": "time", "time": "10:40", "requires_item": "minute_hand", "puzzle": "clock_puzzle"}
+      "lock": {
+        "type": "time",
+        "time": "10:40",
+        "requires_item": "minute_hand",
+        "puzzle": "clock_puzzle"
+      }
+    },
+    "window": {
+      "name": "window",
+      "aliases": [
+        "window",
+        "bars",
+        "rain"
+      ],
+      "visible": true,
+      "description": "A small window with iron bars. Rain runs down the glass. There is only darkness outside.",
+      "cannot_open": "The window is barred from the outside. It will not open."
     },
     "door": {
       "name": "oak door",
-      "aliases": ["door", "oak door", "exit", "keypad"],
+      "aliases": [
+        "door",
+        "oak door",
+        "exit",
+        "keypad"
+      ],
       "visible": true,
       "description": "A heavy oak door with a four-digit keypad. A small red light glows above the keys.",
       "description_unlocked": "The keypad light is green and the oak door stands unlocked.",
-      "lock": {"type": "code", "code": "1893", "puzzle": "exit_door"},
+      "lock": {
+        "type": "code",
+        "code": "1893",
+        "puzzle": "exit_door"
+      },
       "is_exit": true
     }
   },
   "items": {
     "note": {
       "name": "handwritten note",
-      "aliases": ["note", "handwritten note", "paper"],
+      "aliases": [
+        "note",
+        "handwritten note",
+        "paper"
+      ],
       "location": "desk",
       "description": "The note reads: \"The year begins in the cold. Read the seasons in order.\""
     },
     "brass_key": {
       "name": "small brass key",
-      "aliases": ["brass key", "small brass key", "key"],
+      "aliases": [
+        "brass key",
+        "small brass key",
+        "key"
+      ],
       "location": "drawer",
       "description": "A small brass key, far too small for a door. It looks like it fits a tiny lock."
     },
     "minute_hand": {
       "name": "brass minute hand",
-      "aliases": ["minute hand", "brass minute hand", "clock hand", "hand"],
+      "aliases": [
+        "minute hand",
+        "brass minute hand",
+        "clock hand",
+        "hand"
+      ],
       "location": "painting",
       "description": "A long brass minute hand. It looks like it belongs to a clock."
     },
     "roman_card": {
       "name": "card with Roman numerals",
-      "aliases": ["card", "roman card", "numerals"],
+      "aliases": [
+        "card",
+        "roman card",
+        "numerals"
+      ],
       "location": "clock",
       "description": "A cream card with Roman numerals written in ink: MDCCCXCIII."
     }
