@@ -75,7 +75,9 @@ class Game:
                 if not state["objects"][entity]["discovered"]:
                     continue
                 status = "still locked" if state["objects"][entity]["locked"] else "unlocked"
-                facts.append(f"Your memory is not what the room shows: the {self.config['objects'][entity]['name']} is {status}.")
+                facts.append(f"The {self.config['objects'][entity]['name']} is {status}.")
+        if facts:
+            return ["The room does not match your claim."] + facts
         if not facts:
             solved = len(state["solved_puzzles"])
             total = len(self.config["puzzles"])

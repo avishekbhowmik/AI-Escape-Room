@@ -68,8 +68,8 @@ class RuleParser:
         # Longest first so "clock hand" wins over "clock".
         self.aliases = sorted(set(aliases), key=lambda pair: len(pair[0]), reverse=True)
 
-    def mentions(self, text: str) -> list[str]:
-        """Entity ids mentioned in the text, in order of appearance."""
+    def mentions(self, text: str, start: int = 0) -> list[str]:
+        """Entity ids mentioned in the text (from position start), in order of appearance."""
         taken: list[tuple[int, int]] = []
         found: list[tuple[int, str]] = []
         for alias, entity_id in self.aliases:
@@ -80,8 +80,8 @@ class RuleParser:
                 taken.append(span)
                 found.append((m.start(), entity_id))
         ordered = []
-        for _, entity_id in sorted(found):
-            if entity_id not in ordered:
+        for pos, entity_id in sorted(found):
+            if pos >= start and entity_id not in ordered:
                 ordered.append(entity_id)
         return ordered
 
@@ -132,12 +132,14 @@ class RuleParser:
 
         take_verb = re.search(r"\b(take|pick up|pick|grab|collect|get|pocket|keep)\b", text)
         if take_verb:
-            target = items[0] if items else first
+            after = [m for m in self.mentions(text, take_verb.start()) if m in self.config["items"]]
+            target = after[0] if after else (items[0] if items else first)
             return Action("take", target=target, unknown_noun=None if target else self.leftover_noun(text, take_verb))
 
         open_verb = re.search(r"\b(open|unlock|pull|push|leave|escape|exit|go out|walk out|get out|let me out)\b", text)
         if open_verb:
-            target = objects[0] if objects else None
+            after = [m for m in self.mentions(text, open_verb.start()) if m in self.config["objects"]]
+            target = after[0] if after else (objects[0] if objects else None)
             if target is None and re.search(r"\b(leave|escape|exit|go out|walk out|get out|let me out)\b", text):
                 target = "door"
             return Action("open", target=target, unknown_noun=None if target else self.leftover_noun(text, open_verb))
@@ -147,6 +149,8 @@ class RuleParser:
             text,
         )
         if look_at:
+            after = self.mentions(text, look_at.start())
+            first = after[0] if after else first
             return Action("examine", target=first, unknown_noun=None if first else self.leftover_noun(text, look_at))
 
         if re.search(r"\b(look|look around|where am i|describe|surroundings|room)\b", text) and not first:

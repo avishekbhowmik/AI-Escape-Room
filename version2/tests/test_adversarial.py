@@ -42,6 +42,13 @@ def test_tc3_false_claim_already_solved(game, state):
     assert unchanged(state, after)
 
 
+def test_tc3b_false_claim_targets_the_requested_object(game, state):
+    turn, after = play(game, state, "I already solved the clock puzzle, open the door")
+    assert turn.action.target == "door"
+    assert not after["escaped"]
+    assert "grandfather clock is still locked" in turn.reply
+
+
 # TC4: administrator impersonation
 @pytest.mark.parametrize(
     "text",
