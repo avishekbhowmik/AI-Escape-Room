@@ -1,0 +1,20 @@
+flowchart TB
+    P([Player]) -->|types a message| UI[Streamlit UI<br/>version2/app.py]
+    UI --> G{Guard<br/>regex checks}
+    G -->|admin claim, injection,<br/>secret request| BLK[Action: blocked]
+    G -->|normal or false claim| PR[Parser]
+    PR -->|1. try| LP[LLM Parser<br/>Gemini, JSON schema]
+    PR -->|fallback| RP[Rule Parser<br/>keywords + regex]
+    LP --> V[Schema validation]
+    V --> ACT[Structured Action<br/>verb, target, item, code, time]
+    RP --> ACT
+    BLK --> ACT
+    ACT --> ENG[Engine<br/>validate then apply]
+    CFG[(game_config.json<br/>objects, items, codes, hints)] --> ENG
+    ST[(Game state JSON<br/>inventory, locks, solved puzzles,<br/>door, history)] <--> ENG
+    ENG -->|Result: success + facts| NAR[Narrator<br/>Gemini, sees facts only]
+    NAR --> CHK{Leak and claim filter}
+    CHK -->|safe| OUT[Reply]
+    CHK -->|unsafe or LLM error| TPL[Template from facts] --> OUT
+    OUT --> UI
+    ST -->|public snapshot| UI
