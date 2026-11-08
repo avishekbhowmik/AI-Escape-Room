@@ -1,0 +1,123 @@
+{
+  "title": "The Clockmaker's Library",
+  "intro": "You wake up on a cold wooden floor. The air smells of dust and old paper, and rain taps against the only window. You are in the private library of Professor Elias Wren. You can see a desk with a drawer, a tall bookshelf, a painting of a harbour, a grandfather clock and a heavy oak door with a keypad. The door will not open. What do you do?",
+  "objects": {
+    "desk": {
+      "name": "desk",
+      "aliases": ["desk", "writing desk", "table"],
+      "visible": true,
+      "description": "A mahogany writing desk covered in ink stains. It has a single drawer."
+    },
+    "drawer": {
+      "name": "drawer",
+      "aliases": ["drawer", "desk drawer", "combination lock"],
+      "visible": true,
+      "description": "The desk drawer is held shut by a brass combination lock with four number wheels.",
+      "description_unlocked": "The desk drawer is unlocked and slides open.",
+      "lock": {"type": "code", "code": "7429", "puzzle": "drawer_lock"}
+    },
+    "bookshelf": {
+      "name": "bookshelf",
+      "aliases": ["bookshelf", "shelf", "bookcase", "shelves"],
+      "visible": true,
+      "description": "A tall bookshelf full of old leather books. Four of them stick out slightly from the rest. Their spines read Spring, Summer, Autumn and Winter.",
+      "reveals": ["season_books"]
+    },
+    "season_books": {
+      "name": "four season books",
+      "aliases": ["season books", "four books", "books", "book", "spring", "summer", "autumn", "winter"],
+      "visible": false,
+      "description": "You open each of the four books. A single number is written by hand on each first page: Spring 4, Summer 2, Autumn 9, Winter 7."
+    },
+    "painting": {
+      "name": "painting",
+      "aliases": ["painting", "picture", "frame", "portrait", "keyhole"],
+      "visible": true,
+      "description": "An oil painting of a stormy harbour. A clock tower on the pier shows ten forty (10:40). The frame hangs a little crooked, and on its side you notice a tiny keyhole.",
+      "description_unlocked": "The painting has swung open like a cabinet door, revealing a small niche in the wall.",
+      "lock": {"type": "item", "item": "brass_key", "puzzle": "painting_lock"}
+    },
+    "clock": {
+      "name": "grandfather clock",
+      "aliases": ["grandfather clock", "clock", "pendulum"],
+      "visible": true,
+      "description": "A tall grandfather clock. It has stopped, and its minute hand is missing. There is a small panel in its base with no handle.",
+      "description_hand_attached": "The grandfather clock now has its brass minute hand back, but it still shows the wrong time.",
+      "description_unlocked": "The grandfather clock ticks again. The small panel in its base is open.",
+      "lock": {"type": "time", "time": "10:40", "requires_item": "minute_hand", "puzzle": "clock_puzzle"}
+    },
+    "door": {
+      "name": "oak door",
+      "aliases": ["door", "oak door", "exit", "keypad"],
+      "visible": true,
+      "description": "A heavy oak door with a four-digit keypad. A small red light glows above the keys.",
+      "description_unlocked": "The keypad light is green and the oak door stands unlocked.",
+      "lock": {"type": "code", "code": "1893", "puzzle": "exit_door"},
+      "is_exit": true
+    }
+  },
+  "items": {
+    "note": {
+      "name": "handwritten note",
+      "aliases": ["note", "handwritten note", "paper"],
+      "location": "desk",
+      "description": "The note reads: \"The year begins in the cold. Read the seasons in order.\""
+    },
+    "brass_key": {
+      "name": "small brass key",
+      "aliases": ["brass key", "small brass key", "key"],
+      "location": "drawer",
+      "description": "A small brass key, far too small for a door. It looks like it fits a tiny lock."
+    },
+    "minute_hand": {
+      "name": "brass minute hand",
+      "aliases": ["minute hand", "brass minute hand", "clock hand", "hand"],
+      "location": "painting",
+      "description": "A long brass minute hand. It looks like it belongs to a clock."
+    },
+    "roman_card": {
+      "name": "card with Roman numerals",
+      "aliases": ["card", "roman card", "numerals"],
+      "location": "clock",
+      "description": "A cream card with Roman numerals written in ink: MDCCCXCIII."
+    }
+  },
+  "puzzles": [
+    {
+      "id": "drawer_lock",
+      "name": "The season books (drawer combination)",
+      "hints": [
+        "The note on the desk mentions seasons. Something on the bookshelf might be related.",
+        "Each of the four season books hides a number. The note tells you where the year begins.",
+        "Put the season numbers in order, starting with the coldest season, and try them on the drawer."
+      ]
+    },
+    {
+      "id": "painting_lock",
+      "name": "The crooked painting",
+      "hints": [
+        "The key from the drawer is very small. Where have you seen a tiny lock?",
+        "Look closely at the frame of the painting.",
+        "Use the brass key on the painting."
+      ]
+    },
+    {
+      "id": "clock_puzzle",
+      "name": "The stopped clock",
+      "hints": [
+        "The grandfather clock is missing something you may have found.",
+        "Once the clock has its hand, it needs the right time. The painting shows a clock too.",
+        "Set the grandfather clock to the time shown in the painting."
+      ]
+    },
+    {
+      "id": "exit_door",
+      "name": "The exit door",
+      "hints": [
+        "The card from the clock looks like a number written the old Roman way.",
+        "M is 1000, D is 500, C is 100, X is 10 and I is 1. A smaller numeral before a larger one is subtracted.",
+        "Convert the Roman numerals into a four-digit year and enter it on the door keypad."
+      ]
+    }
+  ]
+}
