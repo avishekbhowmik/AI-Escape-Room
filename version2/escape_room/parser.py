@@ -4,7 +4,8 @@ Two parsers share one output format:
 
 * RuleParser: keyword and regex based. Deterministic, works offline.
 * LLMParser: asks Gemini to fill a small JSON schema. Handles unusual
-  phrasing. Its output is validated, and anything outside the schema is
+  phrasing. It is only called when the RuleParser cannot understand the
+  message on its own ("which parts genuinely require an LLM?"). Its output is validated, and anything outside the schema is
   thrown away. The LLM parser never sees codes or solutions, so it cannot
   leak them, and whatever it returns is still checked by the Engine.
 """
@@ -156,8 +157,14 @@ class RuleParser:
         if re.search(r"\b(look|look around|where am i|describe|surroundings|room)\b", text) and not first:
             return Action("look")
         if first:
-            return Action("examine", target=first)
+            # No verb recognised: examining the mentioned thing is only a guess.
+            return Action("examine", target=first, reason="guess")
         return Action("unknown")
+
+    @staticmethod
+    def is_confident(action: Action) -> bool:
+        """True when the rules understood the message without guessing."""
+        return action.verb != "unknown" and not action.unknown_noun and action.reason != "guess"
 
 
 PARSER_PROMPT = """You convert a player's message in a text adventure into one JSON action.
@@ -229,8 +236,9 @@ class LLMParser:
             unknown_noun=noun,
         )
 
-    def parse(self, text: str) -> Action:
-        raw = generate(self.system_prompt, f"Player message: {text!r}", temperature=0.0, json_mode=True)
+    def parse(self, text: str, stats: dict | None = None) -> Action:
+        raw = generate(self.system_prompt, f"Player message: {text!r}", temperature=0.0,
+                       json_mode=True, max_output_tokens=200, stats=stats)
         try:
             return self.validate(json.loads(raw))
         except (json.JSONDecodeError, ValueError) as exc:

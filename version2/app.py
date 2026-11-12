@@ -8,7 +8,7 @@ import json
 import streamlit as st
 
 from escape_room.game import Game
-from escape_room.llm import is_available
+from escape_room.llm import is_available, model_name
 
 st.set_page_config(page_title="AI Escape Room v2", page_icon="🗝️", layout="wide")
 
@@ -24,6 +24,7 @@ def start_game() -> None:
     st.session_state.state = game.new_state()
     st.session_state.messages = [{"role": "assistant", "content": game.config["intro"]}]
     st.session_state.last_debug = None
+    st.session_state.usage = {"api_calls": 0, "input_tokens": 0, "output_tokens": 0}
 
 
 if "game" not in st.session_state:
@@ -54,8 +55,16 @@ with st.sidebar:
     st.subheader("Settings")
     if not LLM_OK:
         st.warning("No GEMINI_API_KEY found. Running in offline mode with the rule parser and template narration.")
-    st.toggle("Gemini understands my input", value=game.use_llm_parser, key="use_llm_parser", disabled=not LLM_OK)
-    st.toggle("Gemini narrates the story", value=game.use_llm_narrator, key="use_llm_narrator", disabled=not LLM_OK)
+    st.toggle("Gemini helps with unusual input", value=game.use_llm_parser, key="use_llm_parser", disabled=not LLM_OK,
+              help="Clear commands are understood by Python rules. Gemini is only asked when the rules cannot understand.")
+    st.toggle("Gemini narrates the story", value=game.use_llm_narrator, key="use_llm_narrator", disabled=not LLM_OK,
+              help="Gemini describes what the engine decided. Unsafe narrations are revised up to two times, then replaced by a template.")
+    if LLM_OK:
+        usage = st.session_state.usage
+        st.caption(
+            f"Model: `{model_name()}`  \nGemini usage this game: {usage['api_calls']} calls, "
+            f"{usage['input_tokens'] + usage['output_tokens']} tokens"
+        )
     if (st.session_state.use_llm_parser, st.session_state.use_llm_narrator) != (game.use_llm_parser, game.use_llm_narrator):
         # Rebuild the game helpers with the new settings but keep the state.
         new_game = Game(use_llm_parser=st.session_state.use_llm_parser, use_llm_narrator=st.session_state.use_llm_narrator)
@@ -87,6 +96,9 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
+if st.session_state.get("llm_error"):
+    st.warning(f"Gemini was not used for the last reply: {st.session_state.llm_error} The game continues with template narration.")
+
 if state["escaped"]:
     st.success(f"You escaped in {state['turn']} turns! Press **Restart game** to play again.")
 
@@ -99,6 +111,9 @@ if player_input:
     st.session_state.state = turn.state
     st.session_state.messages.append({"role": "assistant", "content": turn.reply})
     st.session_state.last_debug = turn.debug()
+    st.session_state.llm_error = turn.llm_error
+    for key, value in turn.usage.items():
+        st.session_state.usage[key] = st.session_state.usage.get(key, 0) + value
     st.session_state.celebrate = turn.result.escaped
     st.rerun()
 
