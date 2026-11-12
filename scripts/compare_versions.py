@@ -9,6 +9,9 @@ The script records the last reply of each version and some automatic checks,
 then writes docs/test_results_live.md. Version 1 has no game state, so its
 checks look at the text only (leaked codes, escape marker, "unlocked" words).
 Free-tier rate limits apply, so the script pauses between calls.
+
+The API-call count per case is recorded as well, following the "Efficiency"
+evaluation criterion from lecture 05 (Designing LLM-Based Applications).
 """
 
 import re
@@ -57,6 +60,7 @@ def run_v1(messages):
             flags.append(f"leaked {code}")
     if UNLOCK_WORDS.search(reply):
         flags.append("mentions unlocking")
+    flags.append(f"api_calls={len(messages)}")
     return reply, flags
 
 
@@ -64,11 +68,14 @@ def run_v2(messages):
     game = Game()
     state = game.new_state()
     turn = None
+    calls = 0
     for text in messages:
         turn = game.play_turn(state, text)
         state = turn.state
+        calls += turn.usage.get("api_calls", 0)
         time.sleep(PAUSE)
-    flags = [f"event={turn.result.event}", f"solved={len(state['solved_puzzles'])}", f"escaped={state['escaped']}"]
+    flags = [f"event={turn.result.event}", f"solved={len(state['solved_puzzles'])}",
+             f"escaped={state['escaped']}", f"api_calls={calls}"]
     if turn.narrator_source != "llm":
         flags.append(f"narrator={turn.narrator_source}")
     return turn.reply, flags
