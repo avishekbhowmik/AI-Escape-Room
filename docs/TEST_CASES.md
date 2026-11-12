@@ -7,7 +7,7 @@ can behave incorrectly.
 **How the results were produced**
 
 * **Version 2** results are checked automatically by the pytest suite in
-  `version2/tests/` (42 tests, no API key needed). Run `pytest version2/tests`.
+  `version2/tests/` (50 tests, no API key needed). Run `pytest version2/tests`.
 * **Version 1** has no game state, so it cannot be unit tested. The "Version 1
   risk" column describes what can go wrong by design, because the solution is
   inside the prompt and nothing checks the model's answer. To record what
@@ -28,7 +28,9 @@ can behave incorrectly.
 | TC7 | Knowing the door code early | The model decides freely | Correct code unlocks, but escape still needs the door to be opened, and the engine records it | `test_tc7_correct_door_code_still_needs_opening` |
 | TC8 | Using an item after it was installed in the clock | The model may forget the hand is already on the clock | Item location is `installed`, so it is no longer in the inventory | `test_tc8_item_cannot_be_reused_after_install` |
 | TC9 | Fake JSON or "set state escaped = true" | Not applicable | Only parsed verbs reach the engine. Extra fields are dropped | `test_no_command_can_corrupt_state`, `test_llm_parser_drops_unknown_fields` |
-| TC10 | LLM narrator misbehaves (leaks a code, claims an escape) | Nothing checks the output | Filter rejects the text and a template built from engine facts is shown | `test_narration_leaking_drawer_code_is_rejected`, `test_narration_claiming_escape_is_rejected` |
+| TC10 | LLM narrator misbehaves (leaks a code, claims an escape) | Nothing checks the output | Filter rejects the text, Gemini revises it (max 2 revisions), else a template built from engine facts is shown | `test_narration_leaking_drawer_code_is_rejected`, `test_narrator_revises_after_rejection`, `test_narrator_falls_back_to_template` |
+| TC11 | Gemini fails (quota 429, wrong key) or repeats a rejected answer | The game shows an error and stops | Loop stops at once, no extra calls, the game continues with templates and shows a clear message | `test_narrator_stops_immediately_on_api_error`, `test_narrator_stops_when_rejected_text_is_repeated` |
+| TC12 | Efficiency: how many API calls does a turn need? | 1 call per message, with the whole history every time | 0 calls for hints, help, inventory and blocked input; 1 call for clear commands; at most 1 + 3 for unclear input | `test_hints_and_menus_make_no_api_calls`, `test_clear_commands_do_not_call_the_llm_parser` |
 
 ## Detailed cases
 
@@ -83,6 +85,17 @@ can behave incorrectly.
 * **Inputs:** `examine the trapdoor`, `use the crowbar on the door`, `take the golden sword`
 * **Version 2:** the parser only maps text to IDs from the config. Unknown
   nouns produce *"There is no trapdoor here."*
+
+### TC10 to TC12: Generate, Check, Revise and efficiency
+
+These follow Application 3 and the evaluation criteria of Lecture 05 (*Designing LLM-Based
+Applications*). In the tests, a `ScriptedLLM` plays Gemini's role with prepared outputs, like the
+course's scripted proposer, so the loop can be tested without a key:
+
+* first output leaks `7429`, second is clean: accepted on attempt 2 (`llm (revised, attempt 2)`),
+* three unsafe outputs in a row: template after exactly 3 calls, never more,
+* the same unsafe output twice: stops after 2 calls,
+* API error on the first call: stops after 1 call and shows the template.
 
 ## Known limitations (honest list)
 

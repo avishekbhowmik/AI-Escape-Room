@@ -45,10 +45,10 @@ You wake up in Professor Elias Wren's locked library. The room has
 | Part | Technology |
 |------|------------|
 | Language | Python 3.10+ |
-| LLM | Google Gemini API (free tier), `google-genai` SDK, default model `gemini-2.5-flash` |
+| LLM | Google Gemini API (free tier), `google-genai` SDK, default model `gemini-3.5-flash-lite` (the course default, configurable in `.env`) |
 | User interface | Streamlit (chat UI) |
 | Game configuration | JSON (`version2/game_config.json`) |
-| Testing | pytest (42 tests, run offline) |
+| Testing | pytest (50 tests, run offline with a scripted fake LLM) |
 | Diagrams | Mermaid |
 
 No paid APIs and no model training are used.
@@ -81,7 +81,7 @@ template narration, so the full game is playable and testable. Version 1 needs a
 ### Running the tests
 
 ```bash
-pytest version2/tests                 # 42 offline tests, no API key needed
+pytest version2/tests                 # 50 offline tests, no API key needed
 python scripts/compare_versions.py    # optional: runs all test cases on BOTH versions with Gemini
 ```
 
@@ -119,10 +119,10 @@ The key idea: **Python owns the rules, the LLM owns the words.**
 Every turn goes through five steps:
 
 1. **Guard** (`guard.py`): regex checks for admin claims, prompt injection, secret requests and false claims. Runs before any LLM call, so it cannot be persuaded.
-2. **Parser** (`parser.py`): turns text into a structured `Action` (`verb`, `target`, `item`, `code`, `time`). Gemini fills a small JSON schema. Its output is validated and anything outside the schema is dropped. A rule-based parser is the fallback.
+2. **Parser** (`parser.py`): turns text into a structured `Action` (`verb`, `target`, `item`, `code`, `time`). A rule-based parser handles clear commands without any API call. Only when it cannot understand the message does Gemini fill a small JSON schema; that output is validated and anything outside the schema is dropped.
 3. **Engine** (`engine.py`): validates the action against the game state and the config (Does the object exist? Is it visible? Is the item in the inventory? Is the code correct?). Only then does it change the state. Failed actions leave the state untouched.
-4. **Narrator** (`narrator.py`): Gemini describes the result. It only receives the engine's facts and a public snapshot of the room. **It never sees any code or solution.**
-5. **Output filter**: rejects a narration that leaks a secret or claims an escape/unlock the engine did not report, and falls back to a template built from the facts.
+4. **Narrator** (`narrator.py`): Gemini describes the result. It only receives the engine's facts and a public snapshot of the room. **It never sees any code or solution.** Hints, help and inventory are shown word for word with no API call.
+5. **Check and revise**: Python checks every narration for leaked secrets and for escape/unlock claims the engine did not report. A rejected narration goes back to Gemini with the reason (**Generate, Check, Revise**, at most 2 revisions). If no attempt passes, or the API fails, a template built from the facts is shown.
 
 ### What changed and why
 
@@ -135,15 +135,35 @@ Every turn goes through five steps:
 | Invented objects | Only IDs from the config can be targeted | `parser.py`, `engine.py` |
 | Admin / injection / secret requests | Deterministic guard before the LLM | `guard.py` |
 | False progress claims | Claims are checked and the real state is reported | `game.py` |
-| LLM output trusted blindly | Leak and claim filter with template fallback | `narrator.py` |
+| LLM output trusted blindly | Leak and claim filter, bounded revision, template fallback | `narrator.py` |
+| Every message costs API calls | Rules first, LLM only where needed; calls and tokens counted per turn | `game.py`, `llm.py` |
+| Unclear API failures | Specific messages for 401/403, 404 and 429, shown in the UI | `llm.py`, `app.py` |
 | Needs an API key to play | Offline mode with rule parser and templates | `game.py`, `parser.py` |
 
-The Version 2 sidebar shows the live game state (puzzles, inventory, door, raw JSON) and a
-"how it was decided" panel for each turn, which makes the behaviour easy to demonstrate.
+The Version 2 sidebar shows the live game state (puzzles, inventory, door, raw JSON), the Gemini
+usage of the current game, and a "how it was decided" panel for each turn (guard result, parser,
+action, engine result, narrator attempts, API calls), which makes the behaviour easy to demonstrate.
+
+### Link to the course: Lecture 05, "Designing LLM-Based Applications"
+
+The lecture builds an AI Trip Planner in three steps. This project follows the same path:
+
+| Trip Planner (lecture) | Escape Room (this project) |
+|------------------------|----------------------------|
+| App 1: Gemini writes the itinerary, nothing is checked | Version 1: Gemini runs the game from one prompt |
+| App 2: local venue CSV + Python tools (`calculate_budget`, `check_capacity`, ...) check a structured JSON plan | `game_config.json` + engine functions (`_do_use`, `_do_enter_code`, ...) check a structured `Action` |
+| App 3: requirements kept in a Python dict, state and history per session | Game state as a JSON-serialisable dict with turn history |
+| App 3: Generate, Check, Revise with at most 3 attempts, stop on repeated invalid plan or API error | Narrator: same loop, same limits, same stopping rules |
+| App 3: "check before asking the LLM" (impossible budget is rejected without a Gemini call) | Guard blocks manipulation, and clear commands, hints and menus are handled without a Gemini call |
+| Scripted offline proposer so the notebook runs without a key | `ScriptedLLM` in the tests, and an offline mode in the app |
+| Evaluation: constraint satisfaction, error detection, correction, consistency, efficiency | Covered by the test cases and the API-call counts in `scripts/compare_versions.py` |
+
+Like the lecture's "passed local checks", a Version 2 result only means that the implemented checks
+passed. It guarantees the game rules, not the literary quality of every narration.
 
 ## 7. Test cases
 
-Ten test cases are documented in **[docs/TEST_CASES.md](docs/TEST_CASES.md)**, including all five challenges from the assignment:
+Twelve test cases are documented in **[docs/TEST_CASES.md](docs/TEST_CASES.md)**, including all five challenges from the assignment:
 
 | Challenge | Version 2 result |
 |-----------|------------------|
@@ -182,13 +202,13 @@ AI-Escape-Room/
 │   ├── escape_room/
 │   │   ├── state.py          # structured game state
 │   │   ├── engine.py         # action validation and state changes
-│   │   ├── parser.py         # text -> Action (LLM + rules)
+│   │   ├── parser.py         # text -> Action (rules first, LLM if needed)
 │   │   ├── guard.py          # manipulation detection
-│   │   ├── narrator.py       # LLM narration + output filter
+│   │   ├── narrator.py       # LLM narration, output check, bounded revision
 │   │   ├── game.py           # one turn: guard -> parser -> engine -> narrator
 │   │   └── llm.py            # Gemini wrapper
 │   └── tests/                # pytest suite (offline)
-├── scripts/compare_versions.py  # live comparison of both versions
+├── scripts/compare_versions.py  # live comparison of both versions (replies + API calls)
 ├── docs/
 │   ├── REPORT.md             # short project report
 │   ├── TEST_CASES.md
@@ -202,6 +222,7 @@ AI-Escape-Room/
 
 * The API key is read from the `GEMINI_API_KEY` environment variable (or a local `.env` file).
 * `.env` is listed in `.gitignore`. Only `.env.example` with a placeholder is committed.
+* The key value is never printed or shown in the UI.
 
 ## 11. Limitations and future work
 
@@ -212,4 +233,4 @@ AI-Escape-Room/
 
 ## 12. Report
 
-The 2 to 3 page project report is in **[docs/REPORT.md](docs/REPORT.md)**.
+The 3-page project report is in **[docs/REPORT.md](docs/REPORT.md)** (PDF copy: [docs/REPORT.pdf](docs/REPORT.pdf)).

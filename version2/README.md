@@ -18,5 +18,5 @@ player text -> guard -> parser -> Engine (validate + apply) -> narrator -> filte
 
 ```bash
 streamlit run version2/app.py   # with or without GEMINI_API_KEY
-pytest version2/tests           # 42 offline tests
+pytest version2/tests           # 50 offline tests
 ```
