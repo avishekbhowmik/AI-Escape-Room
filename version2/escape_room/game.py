@@ -85,10 +85,15 @@ class Game:
             return rule_action, "rules (LLM was unsure)"
         return llm_action, "llm"
 
-    def reality_check(self, state: dict, text: str) -> list[str]:
-        """Facts that contradict a false claim, taken from the real state."""
+    def reality_check(self, state: dict, text: str, skip: str | None = None) -> list[str]:
+        """Facts that contradict a false claim, taken from the real state.
+
+        skip: the object the action itself was about (its status is already reported).
+        """
         facts = []
         for entity in self.rule_parser.mentions(text.lower()):
+            if entity == skip:
+                continue
             if entity in self.config["objects"] and "lock" in self.config["objects"][entity]:
                 if not state["objects"][entity]["discovered"]:
                     continue
@@ -115,7 +120,7 @@ class Game:
         result, new = self.engine.handle_action(state, action)
 
         if check.category == "false_claim":
-            result.facts.extend(self.reality_check(new, text))
+            result.facts.extend(self.reality_check(new, text, skip=action.target))
             notes.append("False claim detected: the engine state was used instead of the claim.")
 
         reply, narrator_source = self.narrator.narrate(text, result, public_snapshot(self.config, new), stats=usage)
