@@ -11,7 +11,8 @@
       ],
       "visible": true,
       "description": "A mahogany writing desk covered in ink stains. It has a single drawer.",
-      "cannot_open": "The desk itself does not open, but it has a drawer with a combination lock."
+      "cannot_open": "The desk itself does not open, but it has a drawer with a combination lock.",
+      "contents_label": "On the desk"
     },
     "drawer": {
       "name": "drawer",
@@ -27,7 +28,8 @@
         "type": "code",
         "code": "7429",
         "puzzle": "drawer_lock"
-      }
+      },
+      "contents_label": "In the open drawer"
     },
     "bookshelf": {
       "name": "bookshelf",
@@ -75,7 +77,8 @@
         "type": "item",
         "item": "brass_key",
         "puzzle": "painting_lock"
-      }
+      },
+      "contents_label": "In the niche behind the painting"
     },
     "clock": {
       "name": "grandfather clock",
@@ -93,7 +96,8 @@
         "time": "10:40",
         "requires_item": "minute_hand",
         "puzzle": "clock_puzzle"
-      }
+      },
+      "contents_label": "In the open panel of the clock"
     },
     "window": {
       "name": "window",
@@ -134,7 +138,7 @@
         "paper"
       ],
       "location": "desk",
-      "description": "The note reads: \"The year begins in the cold. Read the seasons in order.\""
+      "description": "It reads: \"The year begins in the cold. Read the seasons in order.\""
     },
     "brass_key": {
       "name": "small brass key",
@@ -144,7 +148,7 @@
         "key"
       ],
       "location": "drawer",
-      "description": "A small brass key, far too small for a door. It looks like it fits a tiny lock."
+      "description": "It is far too small for a door and looks like it fits a tiny lock."
     },
     "minute_hand": {
       "name": "brass minute hand",
@@ -155,7 +159,7 @@
         "hand"
       ],
       "location": "painting",
-      "description": "A long brass minute hand. It looks like it belongs to a clock."
+      "description": "It is long, made of brass, and clearly belongs to a clock."
     },
     "roman_card": {
       "name": "card with Roman numerals",
@@ -165,7 +169,7 @@
         "numerals"
       ],
       "location": "clock",
-      "description": "A cream card with Roman numerals written in ink: MDCCCXCIII."
+      "description": "It is a cream card. Written on it in ink: MDCCCXCIII."
     }
   },
   "puzzles": [

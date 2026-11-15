@@ -101,11 +101,9 @@ class Game:
                 facts.append(f"The {self.config['objects'][entity]['name']} is {status}.")
         if facts:
             return ["The room does not match your claim."] + facts
-        else:
-            solved = len(state["solved_puzzles"])
-            total = len(self.config["puzzles"])
-            facts.append(f"The room shows your real progress: {solved} of {total} puzzles solved.")
-        return facts
+        solved = len(state["solved_puzzles"])
+        total = len(self.config["puzzles"])
+        return [f"The room shows your real progress: {solved} of {total} puzzles solved."]
 
     def play_turn(self, state: dict, text: str) -> Turn:
         notes = []
