@@ -1,7 +1,7 @@
 # AI Escape Room: Project Report
 
-**Course:** Generative AI | **Project:** Mini Project 1, AI-Powered Escape Room
-**Author:** Avishek | **Repository:** AI-Escape-Room
+**Course:** Generative AI | **Project:** Mini Project 1, AI-Powered Escape Room  
+**Author:** Avishek | **Repository:** https://github.com/avishekbhowmik/AI-Escape-Room
 
 ## 1. Introduction
 
@@ -91,10 +91,10 @@ course notebooks. Without a key, the game runs offline with the rule parser and 
 
 ## 5. Testing and results
 
-Twelve test cases are documented in `docs/TEST_CASES.md`: the five challenges from the assignment
+Thirteen test cases are documented in `docs/TEST_CASES.md`: the five challenges from the assignment
 (uncollected key, wrong code, false claim, administrator impersonation, request for all solutions)
-plus invented objects, reused items, fake JSON commands, a misbehaving narrator, API failures and
-efficiency. They are implemented as 50 pytest tests that run without a key. Like the scripted
+plus invented objects, reused items, fake JSON commands, a misbehaving narrator, API failures,
+efficiency and long-chat memory. They are implemented as 76 pytest tests that run without a key. Like the scripted
 proposer in Application 3, a `ScriptedLLM` replaces Gemini with prepared outputs that leak codes,
 repeat themselves or fail, to test the revision loop and its stopping rules. Every adversarial test
 also asserts that the game state is unchanged. All tests pass.
@@ -103,8 +103,11 @@ also asserts that the game state is unchanged. All tests pass.
 replies and API calls in `docs/test_results_live.md`, covering the lecture's evaluation criteria:
 constraint satisfaction, error detection, correction, consistency and efficiency.
 
-Testing also found a real bug: "I already solved the clock puzzle, open the door" was parsed as
-*open the clock*. The parser now chooses the object after the verb, and a regression test was added.
+Testing also found real bugs, mostly in the rule parser. "I already solved the clock puzzle, open
+the door" was parsed as *open the clock*; "read book 2" was treated as typing the code "2"; "get out
+of here" was read as *take*; and "set the clock to 22:40" was rejected although a clock face shows
+10:40. The narration check also raised a false alarm on "you could leave the library now". All were
+fixed, and each now has a regression test.
 
 ## 6. Limitations and lessons learned
 
