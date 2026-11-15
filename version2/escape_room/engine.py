@@ -53,6 +53,17 @@ class Result:
         return asdict(self)
 
 
+def join_words(words: list[str]) -> str:
+    """["a", "b", "c"] -> "a, b and c"."""
+    return words[0] if len(words) == 1 else ", ".join(words[:-1]) + " and " + words[-1]
+
+
+def same_clock_time(a: str, b: str) -> bool:
+    """Compare two "H:MM" times as a clock face shows them (22:40 == 10:40)."""
+    (ha, ma), (hb, mb) = (map(int, t.split(":")) for t in (a, b))
+    return ha % 12 == hb % 12 and ma == mb
+
+
 class Engine:
     def __init__(self, config: dict):
         self.config = config
@@ -64,6 +75,12 @@ class Engine:
         if entity_id in self.objects:
             return self.objects[entity_id]["name"]
         return self.items[entity_id]["name"]
+
+    def with_article(self, entity_id: str) -> str:
+        name = self.name(entity_id)
+        if name.split()[0] in {"four", "two", "three"}:
+            return f"the {name}"
+        return f"an {name}" if name[0] in "aeiou" else f"a {name}"
 
     def _object_description(self, state: dict, obj_id: str) -> str:
         obj = self.objects[obj_id]
@@ -78,8 +95,9 @@ class Engine:
         inside = visible_items_in(self.config, state, obj_id)
         if not inside:
             return None
-        names = ", ".join(self.name(i) for i in inside)
-        return f"Inside or on the {self.name(obj_id)} you can see: {names}."
+        names = join_words([self.with_article(i) for i in inside])
+        place = self.objects[obj_id].get("contents_label", f"On the {self.name(obj_id)}")
+        return f"{place} you see {names}."
 
     def _unlock(self, state: dict, obj_id: str) -> list[str]:
         """Unlock an object, mark its puzzle solved and report what appears."""
@@ -96,9 +114,6 @@ class Engine:
         if contents:
             facts.append(contents)
         return facts
-
-    def is_reachable_object(self, state: dict, obj_id: str | None) -> bool:
-        return obj_id in self.objects and state["objects"][obj_id]["discovered"]
 
     # ---------------------------------------------------------------- entry point
     def handle_action(self, state: dict, action: Action) -> tuple[Result, dict]:
@@ -132,8 +147,8 @@ class Engine:
 
     # ------------------------------------------------------------------- verbs
     def _do_look(self, state: dict, action: Action) -> Result:
-        seen = [self.name(o) for o, s in state["objects"].items() if s["discovered"]]
-        facts = ["You look around the library. You can see: " + ", ".join(seen) + "."]
+        seen = [self.with_article(o) for o, s in state["objects"].items() if s["discovered"]]
+        facts = ["You look around the library. You can see " + join_words(seen) + "."]
         for obj_id, obj_state in state["objects"].items():
             if obj_state["discovered"]:
                 contents = self._contents_fact(state, obj_id)
@@ -164,7 +179,7 @@ class Engine:
             return target
 
         if target in self.items:
-            return Result(True, "EXAMINE_ITEM", [self.items[target]["description"]])
+            return Result(True, "EXAMINE_ITEM", [f"You look at the {self.name(target)}. {self.items[target]['description']}"])
 
         obj = self.objects[target]
         state["objects"][target]["examined"] = True
@@ -234,8 +249,9 @@ class Engine:
     def _do_use(self, state: dict, action: Action) -> Result:
         item = action.item
         if item is None or item not in self.items:
-            noun = action.unknown_noun or "that"
-            return Result(False, "NO_SUCH_ITEM", [f"You do not have {noun}."])
+            if action.unknown_noun:
+                return Result(False, "NO_SUCH_ITEM", [f"There is no {action.unknown_noun} in this room, and you are not carrying one."])
+            return Result(False, "NO_SUCH_ITEM", ["Say which item you want to use, for example: use the key on the painting."])
         if item not in state["inventory"]:
             # Inventory rule: only collected items can be used.
             return Result(False, "NOT_IN_INVENTORY", [f"You do not have the {self.name(item)}. You have not collected it."])
@@ -273,6 +289,10 @@ class Engine:
         return Result(False, "NOTHING_HAPPENS", [f"You try the {self.name(item)} on the {obj['name']}, but nothing happens."])
 
     def _do_enter_code(self, state: dict, action: Action) -> Result:
+        if action.target is None and not action.unknown_noun:
+            places = [o["name"] for o_id, o in self.objects.items()
+                      if o.get("lock", {}).get("type") == "code" and state["objects"][o_id]["discovered"]]
+            return Result(False, "NO_TARGET", [f"Where do you want to enter {action.code or 'the code'}? You could try the {' or the '.join(places)}."])
         target = self._resolve_target(state, action)
         if isinstance(target, Result):
             return target
@@ -313,7 +333,7 @@ class Engine:
             return Result(False, "MISSING_PART", ["You cannot set the time. The clock is missing its minute hand."])
         if not action.time:
             return Result(False, "INVALID_TIME", ["Say which time you want to set, for example 3:15."])
-        if action.time != lock["time"]:
+        if not same_clock_time(action.time, lock["time"]):
             attempts = state["failed_attempts"].get(target, 0) + 1
             state["failed_attempts"][target] = attempts
             return Result(False, "WRONG_TIME", [f"You set the clock to {action.time}. It ticks once and stops again."])
@@ -324,8 +344,8 @@ class Engine:
     def _do_inventory(self, state: dict, action: Action) -> Result:
         if not state["inventory"]:
             return Result(True, "INVENTORY", ["You are not carrying anything."])
-        names = ", ".join(self.name(i) for i in state["inventory"])
-        return Result(True, "INVENTORY", [f"You are carrying: {names}."])
+        names = join_words([self.with_article(i) for i in state["inventory"]])
+        return Result(True, "INVENTORY", [f"You are carrying {names}."])
 
     def _do_hint(self, state: dict, action: Action) -> Result:
         for puzzle in self.config["puzzles"]:

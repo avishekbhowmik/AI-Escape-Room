@@ -5,8 +5,8 @@ Two parsers share one output format:
 * RuleParser: keyword and regex based. Deterministic, works offline.
 * LLMParser: asks Gemini to fill a small JSON schema. Handles unusual
   phrasing. It is only called when the RuleParser cannot understand the
-  message on its own ("which parts genuinely require an LLM?"). Its output is validated, and anything outside the schema is
-  thrown away. The LLM parser never sees codes or solutions, so it cannot
+  message on its own ("which parts genuinely require an LLM?"). Its output
+  is validated, and anything outside the schema is thrown away. The LLM parser never sees codes or solutions, so it cannot
   leak them, and whatever it returns is still checked by the Engine.
 """
 
@@ -111,14 +111,19 @@ class RuleParser:
             return Action("inventory")
 
         time = extract_time(text)
-        if re.search(r"\b(set|turn|move|adjust|change|wind)\b", text) and time:
-            target = "clock" if "clock" in objects or not objects else objects[0]
+        set_verb = re.search(r"\b(set|turn|move|adjust|change|wind)\b", text)
+        clock_ids = [o for o in objects if self.config["objects"][o].get("lock", {}).get("type") == "time"]
+        if set_verb and (time or clock_ids):
+            # "set the clock to 10" (no minutes) still means the clock, with an invalid time.
+            target = clock_ids[0] if clock_ids else (objects[0] if objects else "clock")
             return Action("set_time", target=target, time=time)
 
         code_verb = re.search(r"\b(enter|type|input|dial|try|key in|punch in|press|code)\b", text)
         code = extract_code(text)
-        if code and (code_verb or objects):
-            code_targets = [o for o in objects if self.config["objects"][o].get("lock", {}).get("type") == "code"]
+        code_targets = [o for o in objects if self.config["objects"][o].get("lock", {}).get("type") == "code"]
+        # A number only counts as a code with a code verb, or with three or more
+        # digits aimed at a code lock. "read book 2" is not a code attempt.
+        if code and (code_verb or (len(code) >= 3 and code_targets)):
             return Action("enter_code", target=code_targets[0] if code_targets else None, code=code)
 
         use_verb = re.search(r"\b(use|put|insert|attach|place|fit|hang|install|unlock .+ with|try .+ (on|in))\b", text)
@@ -131,7 +136,7 @@ class RuleParser:
             return Action("use", item=None, target=objects[0] if objects else None,
                           unknown_noun=" ".join(words[-2:]) or None)
 
-        take_verb = re.search(r"\b(take|pick up|pick|grab|collect|get|pocket|keep)\b", text)
+        take_verb = re.search(r"\b(take|pick up|pick|grab|collect|get(?! out)|pocket|keep)\b", text)
         if take_verb:
             after = [m for m in self.mentions(text, take_verb.start()) if m in self.config["items"]]
             target = after[0] if after else (items[0] if items else first)
@@ -142,6 +147,7 @@ class RuleParser:
             after = [m for m in self.mentions(text, open_verb.start()) if m in self.config["objects"]]
             target = after[0] if after else (objects[0] if objects else None)
             if target is None and re.search(r"\b(leave|escape|exit|go out|walk out|get out|let me out)\b", text):
+                # Leaving always means the door, even when no object is named.
                 target = "door"
             return Action("open", target=target, unknown_noun=None if target else self.leftover_noun(text, open_verb))
 
