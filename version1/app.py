@@ -10,6 +10,8 @@ from llm import LLMError, chat
 
 st.set_page_config(page_title="AI Escape Room v1", page_icon="🗝️")
 
+AVATARS = {"assistant": "🕯️", "user": "🧑"}
+
 
 def reset_game() -> None:
     st.session_state.messages = [{"role": "assistant", "content": INTRO_MESSAGE}]
@@ -40,7 +42,7 @@ st.title("🗝️ The Clockmaker's Library")
 st.caption("AI Escape Room, Version 1")
 
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
+    with st.chat_message(msg["role"], avatar=AVATARS[msg["role"]]):
         st.markdown(msg["content"])
 
 if st.session_state.escaped:
@@ -50,10 +52,10 @@ player_input = st.chat_input("What do you do?", disabled=st.session_state.escape
 
 if player_input:
     st.session_state.messages.append({"role": "user", "content": player_input})
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar=AVATARS["user"]):
         st.markdown(player_input)
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar=AVATARS["assistant"]):
         with st.spinner("The Game Master is thinking..."):
             try:
                 # Gemini expects the conversation to start with a user turn,
@@ -70,5 +72,9 @@ if player_input:
 
     st.session_state.messages.append({"role": "assistant", "content": reply})
     if st.session_state.escaped:
-        st.balloons()
+        # Rerun so the input box is disabled; the balloons are shown after it.
+        st.session_state.celebrate = True
         st.rerun()
+
+if st.session_state.pop("celebrate", False):
+    st.balloons()

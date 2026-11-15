@@ -13,6 +13,7 @@ from escape_room.llm import is_available, model_name
 st.set_page_config(page_title="AI Escape Room v2", page_icon="🗝️", layout="wide")
 
 LLM_OK = is_available()
+AVATARS = {"assistant": "🕯️", "user": "🧑"}
 
 
 def start_game() -> None:
@@ -54,7 +55,8 @@ with st.sidebar:
     st.divider()
     st.subheader("Settings")
     if not LLM_OK:
-        st.warning("No GEMINI_API_KEY found. Running in offline mode with the rule parser and template narration.")
+        st.caption("Offline mode: no `GEMINI_API_KEY` found, so Python rules understand the input "
+                   "and replies come from templates. Add a key to `.env` to switch Gemini on.")
     st.toggle("Gemini helps with unusual input", value=game.use_llm_parser, key="use_llm_parser", disabled=not LLM_OK,
               help="Clear commands are understood by Python rules. Gemini is only asked when the rules cannot understand.")
     st.toggle("Gemini narrates the story", value=game.use_llm_narrator, key="use_llm_narrator", disabled=not LLM_OK,
@@ -93,7 +95,7 @@ st.title("🗝️ " + config["title"])
 st.caption("AI Escape Room, Version 2: Python decides, Gemini describes.")
 
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
+    with st.chat_message(msg["role"], avatar=AVATARS[msg["role"]]):
         st.markdown(msg["content"])
 
 if st.session_state.get("llm_error"):

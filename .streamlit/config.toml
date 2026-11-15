@@ -1,0 +1,7 @@
+# Streamlit settings for both versions (run the apps from the repository root).
+[client]
+toolbarMode = "minimal"   # hide the developer "Deploy" button
+
+[theme]
+base = "light"
+primaryColor = "#8b5a2b"  # warm brown, like old leather books

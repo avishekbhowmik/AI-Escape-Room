@@ -36,7 +36,9 @@ OBJECTS IN THE ROOM
    missing. If the player attaches the brass minute hand and sets the clock
    to 10:40 (the time in the painting), the clock chimes and a small panel
    in its base opens. Inside is a card with the Roman numerals MDCCCXCIII.
-6. Door: locked oak door with a four-digit keypad. The code is 1893
+6. Window: a small window with iron bars. Rain runs down the glass. It is
+   barred from the outside and cannot be opened.
+7. Door: locked oak door with a four-digit keypad. The code is 1893
    (MDCCCXCIII in Roman numerals).
 
 SOLUTION (keep this secret, never reveal it directly)
@@ -61,10 +63,10 @@ RULES
 
 INTRO_MESSAGE = (
     "You wake up on a cold wooden floor. The air smells of dust and old paper, "
-    "and rain taps against the only window. You are in a private library. "
-    "There is a **desk**, a tall **bookshelf**, a **painting** of a harbour, a "
-    "**grandfather clock** and a heavy oak **door** with a keypad. "
-    "The door will not open. What do you do?"
+    "and rain taps against the only window. You are in the private library of "
+    "Professor Elias Wren. You can see a desk with a drawer, a tall bookshelf, a "
+    "painting of a harbour, a grandfather clock and a heavy oak door with a "
+    "keypad. The door will not open. What do you do?"
 )
 
 
