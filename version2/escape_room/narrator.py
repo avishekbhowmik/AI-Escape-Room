@@ -36,8 +36,8 @@ You will receive FACTS that the game engine has already decided. Rules:
 """
 
 ESCAPE_CLAIM = re.compile(
-    r"\b(you('ve| have)? (escaped|made it out)|you are free|step(s)? (out|outside) (of|into)|"
-    r"door (swings|creaks|bursts|slides) open|leave the library)\b",
+    r"\b(you('ve| have)? (escaped|made it out)|you are free|you step (out|outside)|"
+    r"door (swings|creaks|bursts|slides) open)\b",
     re.IGNORECASE,
 )
 UNLOCK_CLAIM = re.compile(
@@ -73,8 +73,9 @@ def check_narration(text: str, result: Result, config: dict) -> str | None:
             return f"leaked secret {secret!r}"
     if not result.escaped and ESCAPE_CLAIM.search(text):
         return "claimed an escape the engine did not report"
-    if not result.success and UNLOCK_CLAIM.search(text):
-        return "claimed an unlock after a failed action"
+    # An unlock may only be described when the engine reported one this turn.
+    if UNLOCK_CLAIM.search(text) and not re.search(r"\bunlocked\b|\bswung open\b", " ".join(result.facts)):
+        return "claimed an unlock the engine did not report"
     return None
 
 
