@@ -1,0 +1,93 @@
+<!doctype html>
+<!-- Source of architecture_v2.png (rendered with a headless browser screenshot of #d). -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --ink:#2b2b2b; --muted:#666; --line:#8a8a8a; --box:#ffffff; --py:#e8f1fb; --pyb:#4a7fb8; --ai:#fdf0e6; --aib:#c26a2c; --data:#eef6ec; --datab:#4f8a43; }
+  body { margin:0; background:#fff; font-family: Arial, Helvetica, sans-serif; color:var(--ink); }
+  #d { width:1500px; padding:28px 32px 24px; box-sizing:border-box; }
+  h1 { font-size:26px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:16px; margin-bottom:18px; }
+  .row { display:flex; align-items:center; gap:14px; }
+  .box { border:2px solid var(--pyb); background:var(--py); border-radius:10px; padding:10px 14px; text-align:center; font-size:16px; line-height:1.35; min-width:150px; }
+  .box b { display:block; font-size:17px; }
+  .ai { border-color:var(--aib); background:var(--ai); }
+  .data { border-color:var(--datab); background:var(--data); border-radius:16px; }
+  .plain { border-color:#999; background:#fafafa; }
+  .arrow { color:var(--line); font-size:15px; text-align:center; white-space:nowrap; }
+  .arrow span { display:block; font-size:30px; line-height:1; color:#777; }
+  .stage { border:2px dashed #c9c9c9; border-radius:14px; padding:14px 18px 16px; margin:0; }
+  .stage h2 { font-size:17px; margin:0 0 12px; color:#444; }
+  .down { text-align:center; color:#777; font-size:15px; margin:6px 0; }
+  .down span { font-size:28px; display:block; line-height:1; }
+  .legend { display:flex; gap:22px; font-size:14px; color:var(--muted); margin-top:14px; }
+  .sw { display:inline-block; width:16px; height:16px; border-radius:4px; vertical-align:-3px; margin-right:6px; border:2px solid; }
+  .note { font-size:14px; color:var(--muted); }
+  .col { display:flex; flex-direction:column; gap:8px; align-items:center; }
+</style>
+</head>
+<body>
+<div id="d">
+  <h1>Version 2 architecture: Python decides, Gemini describes</h1>
+  <div class="sub">One turn, from the player's message to the reply (escape_room/game.py)</div>
+
+  <div class="row" style="justify-content:center">
+    <div class="box plain"><b>Player</b>types a message</div>
+    <div class="arrow"><span>⇄</span></div>
+    <div class="box plain"><b>Streamlit UI</b>version2/app.py<br>chat + live game-state panel</div>
+  </div>
+  <div class="down"><span>↓</span>message</div>
+
+  <div class="stage">
+    <h2>1 · Understand the message</h2>
+    <div class="row">
+      <div class="box"><b>Guard</b>regex checks, no LLM</div>
+      <div class="arrow">normal<span>→</span></div>
+      <div class="box"><b>Rule parser</b>keywords + regex</div>
+      <div class="arrow">not understood<span>→</span></div>
+      <div class="box ai"><b>LLM parser</b>Gemini fills a JSON schema,<br>Python validates it</div>
+      <div class="arrow"><span>→</span></div>
+      <div class="box plain"><b>Structured Action</b>verb, target, item,<br>code, time</div>
+    </div>
+    <div class="note" style="margin-top:10px">Admin claims, prompt injection and requests for codes become a <b>blocked</b> action. Clear commands skip the LLM parser.</div>
+  </div>
+  <div class="down"><span>↓</span>Action</div>
+
+  <div class="stage">
+    <h2>2 · Decide (Python only, the LLM is never asked)</h2>
+    <div class="row" style="justify-content:center">
+      <div class="box data"><b>game_config.json</b>objects, items, codes, hints</div>
+      <div class="arrow">rules<span>→</span></div>
+      <div class="box" style="min-width:260px"><b>Engine</b>validate the action, then apply it<br><span class="note">exists? visible? in inventory? right code?</span></div>
+      <div class="arrow">read / write<span>⇄</span></div>
+      <div class="box data"><b>Game state (JSON)</b>locks, item locations, inventory,<br>solved puzzles, door, history</div>
+    </div>
+  </div>
+  <div class="down"><span>↓</span>Result: success + facts</div>
+
+  <div class="stage">
+    <h2>3 · Describe the result</h2>
+    <div class="row">
+      <div class="box ai"><b>Narrator</b>Gemini, sees facts only,<br>never codes or solutions</div>
+      <div class="arrow"><span>→</span></div>
+      <div class="box"><b>Check narration</b>leaked secret?<br>false escape / unlock?</div>
+      <div class="col">
+        <div class="arrow">safe<span>→</span></div>
+        <div class="arrow" style="color:var(--aib)">unsafe: back to Gemini<br>with the reason (max 2 revisions)</div>
+      </div>
+      <div class="box plain"><b>Reply</b>to the UI</div>
+      <div class="arrow">still unsafe, API error,<br>or hint / help / inventory<span>←</span></div>
+      <div class="box"><b>Template</b>built from the facts</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div><span class="sw" style="background:var(--py);border-color:var(--pyb)"></span>Python</div>
+    <div><span class="sw" style="background:var(--ai);border-color:var(--aib)"></span>Gemini (optional, offline mode works without it)</div>
+    <div><span class="sw" style="background:var(--data);border-color:var(--datab)"></span>Data</div>
+    <div><span class="sw" style="background:#fafafa;border-color:#999"></span>Interface and data passed between steps</div>
+  </div>
+</div>
+</body>
+</html>
