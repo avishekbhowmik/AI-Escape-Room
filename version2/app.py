@@ -86,9 +86,6 @@ with st.sidebar:
     st.markdown(f"**Door:** {door}  \n**Turn:** {state['turn']}")
     with st.expander("Structured state (JSON)"):
         st.code(json.dumps({k: v for k, v in state.items() if k != "history"}, indent=2), language="json")
-    if st.session_state.last_debug:
-        with st.expander("Last turn: how it was decided"):
-            st.code(json.dumps(st.session_state.last_debug, indent=2), language="json")
 
 # --------------------------------------------------------------------- main
 st.title("🗝️ " + config["title"])
@@ -103,6 +100,10 @@ if st.session_state.get("llm_error"):
 
 if state["escaped"]:
     st.success(f"You escaped in {state['turn']} turns! Press **Restart game** to play again.")
+
+if st.session_state.last_debug:
+    with st.expander("How the last turn was decided (guard, parser, engine, narrator, API calls)"):
+        st.code(json.dumps(st.session_state.last_debug, indent=2), language="json", wrap_lines=True)
 
 player_input = st.chat_input("What do you do?", disabled=state["escaped"])
 

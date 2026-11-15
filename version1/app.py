@@ -8,7 +8,7 @@ import streamlit as st
 from game_master import INTRO_MESSAGE, SYSTEM_PROMPT, clean_reply, has_escaped
 from llm import LLMError, chat
 
-st.set_page_config(page_title="AI Escape Room v1", page_icon="🗝️")
+st.set_page_config(page_title="AI Escape Room v1", page_icon="🗝️", layout="wide")
 
 AVATARS = {"assistant": "🕯️", "user": "🧑"}
 
@@ -33,13 +33,12 @@ with st.sidebar:
         "- *look behind the painting*\n\n"
         "Find the clues, solve the puzzles and open the door."
     )
-    st.caption("Version 1: the Gemini Game Master runs the whole game.")
-    if st.button("Restart game", use_container_width=True):
+    if st.button("Restart game", type="primary", use_container_width=True):
         reset_game()
         st.rerun()
 
 st.title("🗝️ The Clockmaker's Library")
-st.caption("AI Escape Room, Version 1")
+st.caption("AI Escape Room, Version 1: Gemini runs the whole game.")
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"], avatar=AVATARS[msg["role"]]):

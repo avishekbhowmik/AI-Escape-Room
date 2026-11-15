@@ -1,8 +1,0 @@
-flowchart LR
-    P([Player]) -->|types a message| UI[Streamlit chat UI<br/>version1/app.py]
-    UI -->|system prompt + full chat history| LLM[Gemini API<br/>Game Master]
-    SP[[System prompt<br/>room, puzzles, SOLUTIONS, rules]] --> LLM
-    LLM -->|story text, may include ESCAPED marker| UI
-    UI -->|stores messages| SS[(st.session_state<br/>chat history only)]
-    SS --> UI
-    UI -->|shows reply, detects escape| P
