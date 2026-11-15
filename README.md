@@ -57,7 +57,7 @@ No paid APIs and no model training are used.
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/<your-username>/AI-Escape-Room.git
+git clone https://github.com/avishekbhowmik/AI-Escape-Room.git
 cd AI-Escape-Room
 
 # 2. Create a virtual environment and install dependencies
